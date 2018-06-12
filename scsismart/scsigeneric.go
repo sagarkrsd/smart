@@ -240,6 +240,7 @@ func (d *SCSIDevice) PrintDiskInfo() error {
 	capacity, _ := d.readCapacity()
 	fmt.Printf("Capacity: %d bytes (%s)\n", capacity, utilities.ConvertBytes(capacity))
 
+	// TODO : Fetch other disk attributes also such as serial no, vendor, etc
 	// WIP
 	response, _ := d.modeSense(RigidDiskDriveGeometryPage, 0, ModePageControlDefault)
 	fmt.Printf("MODE SENSE buf: % x\n", response)
@@ -259,17 +260,9 @@ func (d *SCSIDevice) PrintDiskInfo() error {
 func (d *SCSIDevice) GetDiskInfo() (DiskAttr, error) {
 	capacity, _ := d.readCapacity()
 
-	// WIP
-	response, _ := d.modeSense(RigidDiskDriveGeometryPage, 0, ModePageControlDefault)
-
-	bdLen := response[3]
-	offset := bdLen + 4
-
-	RPM := binary.BigEndian.Uint16(response[offset+20:])
-
+	// TODO : Return all the basic disk attributes available for a particular disk
 	DiskSmartAttr := DiskAttr{}
 	DiskSmartAttr.UserCapacity = capacity
-	DiskSmartAttr.RotationRate = RPM
 
 	return DiskSmartAttr, nil
 }

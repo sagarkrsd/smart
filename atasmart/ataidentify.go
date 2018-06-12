@@ -74,31 +74,27 @@ var ataMinorVersions = map[uint16]string{
 
 // IdentDevData struct is an ATA IDENTIFY DEVICE struct. ATA8-ACS defines this as a page of 16-bit words.
 type IdentDevData struct {
-	GeneralConfig    uint16      // Word 0, general configuration. If bit 15 is zero, device is ATA.
-	_                [9]uint16   // ...
-	SerialNumber     [20]byte    // Word 10..19, device serial number, padded with spaces (20h).
-	_                [3]uint16   // ...
-	FirmwareRevision [8]byte     // Word 23..26, device firmware revision, padded with spaces (20h).
-	ModelNumber      [40]byte    // Word 27..46, device model number, padded with spaces (20h).
-	_                [28]uint16  // ...
-	SATACap          uint16      // Word 76, SATA capabilities.
-	SATACapAddl      uint16      // Word 77, SATA additional capabilities.
-	_                [3]uint16   // ...
-	MajorVersion     uint16      // Word 80, major version number.
-	MinorVersion     uint16      // Word 81, minor version number.
-	_                [3]uint16   // ...
-	Word85           uint16      // Word 85, supported commands and feature sets.
-	_                uint16      // ...
-	Word87           uint16      // Word 87, supported commands and feature sets.
-	_                [18]uint16  // ...
-	SectorSize       uint16      // Word 106, Logical/physical sector size.
-	_                [1]uint16   // ...
-	WWN              [4]uint16   // Word 108..111, WWN (World Wide Name).
-	_                [105]uint16 // ...
-	RotationRate     uint16      // Word 217, nominal media rotation rate.
-	_                [4]uint16   // ...
-	TransportMajor   uint16      // Word 222, transport major version number.
-	_                [33]uint16  // ...
+	_              [10]uint16  // ...
+	SerialNumber   [20]byte    // Word 10..19, device serial number, padded with spaces (20h).
+	_              [3]uint16   // ...
+	FirmwareRev    [8]byte     // Word 23..26, device firmware revision, padded with spaces (20h).
+	ModelNumber    [40]byte    // Word 27..46, device model number, padded with spaces (20h).
+	_              [33]uint16  // ...
+	MajorVer       uint16      // Word 80, major version number.
+	MinorVer       uint16      // Word 81, minor version number.
+	_              [3]uint16   // ...
+	Word85         uint16      // Word 85, supported commands and feature sets.
+	_              uint16      // ...
+	Word87         uint16      // Word 87, supported commands and feature sets.
+	_              [18]uint16  // ...
+	SectorSize     uint16      // Word 106, Logical/physical sector size.
+	_              [1]uint16   // ...
+	WWN            [4]uint16   // Word 108..111, WWN (World Wide Name).
+	_              [105]uint16 // ...
+	RotationRate   uint16      // Word 217, nominal media rotation rate.
+	_              [4]uint16   // ...
+	TransportMajor uint16      // Word 222, transport major version number.
+	_              [33]uint16  // ...
 } // 512 bytes
 
 // swapByteOrder swaps the order of every second byte in a byte slice (modifies slice in-place).
@@ -124,7 +120,7 @@ func (d *IdentDevData) GetModelNumber() []byte {
 
 // GetFirmwareRevision returns the firmware version of a device from an ATA IDENTIFY command.
 func (d *IdentDevData) GetFirmwareRevision() []byte {
-	return d.swapByteOrder(d.FirmwareRevision[:])
+	return d.swapByteOrder(d.FirmwareRev[:])
 }
 
 // GetWWN returns the worldwide unique name for a disk
@@ -152,12 +148,12 @@ func (d *IdentDevData) GetSectorSize() (uint16, uint16) {
 
 // GetATAMajorVersion returns the ATA major version from an ATA IDENTIFY command.
 func (d *IdentDevData) GetATAMajorVersion() (s string) {
-	if (d.MajorVersion == 0) || (d.MajorVersion == 0xffff) {
+	if (d.MajorVer == 0) || (d.MajorVer == 0xffff) {
 		s = "This device does not report ATA major version"
 		return
 	}
 
-	switch utilities.MSignificantBit(uint(d.MajorVersion)) {
+	switch utilities.MSignificantBit(uint(d.MajorVer)) {
 	case 1:
 		s = "ATA-1"
 	case 2:
@@ -185,19 +181,19 @@ func (d *IdentDevData) GetATAMajorVersion() (s string) {
 
 // GetATAMinorVersion returns the ATA minor version from an ATA IDENTIFY command.
 func (d *IdentDevData) GetATAMinorVersion() string {
-	if (d.MinorVersion == 0) || (d.MinorVersion == 0xffff) {
+	if (d.MinorVer == 0) || (d.MinorVer == 0xffff) {
 		return "This device does not report ATA minor version"
 	}
 
 	// Since the ATA minor version word is not a bitmask, we simply do a map lookup
-	if s, ok := ataMinorVersions[d.MinorVersion]; ok {
+	if s, ok := ataMinorVersions[d.MinorVer]; ok {
 		return s
 	}
 
 	return "unknown"
 }
 
-// Transport returns the type of transport being used such as ATA, SATA .
+// Transport returns the type of ata transport being used such as serial ATA, parallel ATA.
 func (d *IdentDevData) Transport() (s string) {
 	if (d.TransportMajor == 0) || (d.TransportMajor == 0xffff) {
 		s = "This device does not report transport"
